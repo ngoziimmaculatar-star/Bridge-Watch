@@ -4,33 +4,36 @@ import { PriceModel } from "../../src/database/models/price.model";
 import { AggregationService } from "../../src/services/aggregation.service";
 import { LiquidityFragmentationService } from "../../src/services/liquidityFragmentation.service";
 
-const mockRawFn = vi.fn();
-const mockKnexFn = vi.fn((tableName: string) => {
-  const qb: any = {
-    select: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    orderBy: vi.fn().mockReturnThis(),
-    groupBy: vi.fn().mockReturnThis(),
-    then: (resolve: any) => {
-      if (tableName === "bridge_hourly_volume_rollup") {
-        return resolve([
-          {
-            bucket: "2026-09-27T12:00:00.000Z",
-            bridgeId: "Stellar-Ethereum Bridge",
-            totalVolume: "150000",
-            transactionCount: 25,
-            avgAmount: "6000",
-            minAmount: "100",
-            maxAmount: "50000",
-          },
-        ]);
-      }
-      return resolve([]);
-    },
-  };
-  return qb;
+const { mockKnexFn, mockRawFn } = vi.hoisted(() => {
+  const mockRaw = vi.fn();
+  const mockKnex = vi.fn((tableName: string) => {
+    const qb: any = {
+      select: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      groupBy: vi.fn().mockReturnThis(),
+      then: (resolve: any) => {
+        if (tableName === "bridge_hourly_volume_rollup") {
+          return resolve([
+            {
+              bucket: "2026-09-27T12:00:00.000Z",
+              bridgeId: "Stellar-Ethereum Bridge",
+              totalVolume: "150000",
+              transactionCount: 25,
+              avgAmount: "6000",
+              minAmount: "100",
+              maxAmount: "50000",
+            },
+          ]);
+        }
+        return resolve([]);
+      },
+    };
+    return qb;
+  });
+  Object.assign(mockKnex, { raw: (sql: string) => sql });
+  return { mockKnexFn: mockKnex, mockRawFn: mockRaw };
 });
-Object.assign(mockKnexFn, { raw: (sql: string) => sql });
 
 vi.mock("../../src/database/knex", () => ({
   default: mockKnexFn,
